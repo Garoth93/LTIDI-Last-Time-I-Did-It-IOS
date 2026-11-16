@@ -21,7 +21,7 @@ final class ActivityStore: ObservableObject {
         }
     }
 
-    static var defaultFileURL: URL {
+    nonisolated static var defaultFileURL: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("LTIDI", isDirectory: true)
             .appendingPathComponent("activities.json")
