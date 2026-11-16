@@ -49,6 +49,7 @@ jobs:
         working-directory: apps/${{ matrix.app }}
         run: |
           set -euo pipefail
+          mkdir -p build
           xcodebuild build \
             -project "${{ matrix.app }}.xcodeproj" \
             -scheme "${{ matrix.app }}" \

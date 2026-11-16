@@ -39,14 +39,6 @@ public struct ActivityList: Codable, Equatable, Sendable {
         activities.removeAll { $0.id == id }
     }
 
-    public mutating func remove(atOffsets offsets: IndexSet) {
-        activities.remove(atOffsets: offsets)
-    }
-
-    public mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
-        activities.move(fromOffsets: source, toOffset: destination)
-    }
-
     /// Activities ordered by "staleness": never-done first, then the ones
     /// done longest ago. Ties keep the insertion order.
     public func sortedByStaleness() -> [Activity] {

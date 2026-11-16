@@ -24,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: swift test (all packages)
+        shell: bash
         run: |
           set -euo pipefail
           swift --version
