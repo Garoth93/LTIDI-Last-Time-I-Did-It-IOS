@@ -36,9 +36,9 @@ packages/<NomePackage>/    Swift Package con la logica NON grafica
 
 App presenti:
 
-| App   | Package logica | Bundle ID (segnaposto)  | Deployment target |
+| App   | Package logica | Bundle ID               | Deployment target |
 |-------|----------------|-------------------------|-------------------|
-| LTIDI | LTIDICore      | `com.NOMEUTENTE.ltidi`  | iOS 26.0 |
+| LTIDI | LTIDICore      | `com.garoth93.ltidi`    | iOS 26.0 |
 
 L'iPhone dell'utente ha iOS 27.2: il target 26.0 è il massimo che l'SDK del
 runner consente oggi e lascia margine.

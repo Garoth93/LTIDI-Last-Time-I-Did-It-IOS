@@ -1,12 +1,10 @@
 # XcodeGen spec. The .xcodeproj is generated in CI with `xcodegen generate`
 # and is never committed.
 #
-# TODO (da confermare con l'utente):
-#   - PRODUCT_BUNDLE_IDENTIFIER: segnaposto com.NOMEUTENTE.ltidi.
 name: LTIDI
 
 options:
-  bundleIdPrefix: com.NOMEUTENTE
+  bundleIdPrefix: com.garoth93
   deploymentTarget:
     iOS: "26.0"   # iPhone dell'utente: iOS 27.2; SDK del runner: iOS 26.5 (Xcode 26.6)
   xcodeVersion: "26.6"
@@ -48,7 +46,7 @@ targets:
         product: LTIDICore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.NOMEUTENTE.ltidi
+        PRODUCT_BUNDLE_IDENTIFIER: com.garoth93.ltidi
         PRODUCT_NAME: LTIDI
         GENERATE_INFOPLIST_FILE: NO
     info:
