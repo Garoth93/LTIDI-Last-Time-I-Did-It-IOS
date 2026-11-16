@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: "16.4"   # pinned; see CLAUDE.md "Xcode e runner"
+  XCODE_VERSION: "26.6"   # pinned; see CLAUDE.md "Xcode e runner"
 
 concurrency:
   group: build-simulator-${{ github.ref }}
@@ -33,7 +33,7 @@ jobs:
 
   build:
     needs: discover
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:

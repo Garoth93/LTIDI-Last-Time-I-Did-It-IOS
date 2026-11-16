@@ -26,7 +26,7 @@ Dettagli tecnici (versione Xcode, toolchain, convenzioni) in [CLAUDE.md](CLAUDE.
 |----------|--------|-----------|
 | build-simulator | ogni push / PR | verifica che l'app compili (Simulator) |
 | test-linux | ogni push / PR | esegue i test dei package di logica |
-| build-ipa | push su `main` o avvio manuale | artifact `LTIDI-unsigned-ipa` con `LTIDI-unsigned.ipa` |
+| build-ipa | push su `main` o avvio manuale | artifact `LTIDI-unsigned-ipa` con `LTIDI-unsigned.ipa` (target iOS 26.0, Xcode 26.6) |
 | testflight | disattivato | template per un futuro account a pagamento |
 
 ## Installare l'app sull'iPhone (passaggi manuali)

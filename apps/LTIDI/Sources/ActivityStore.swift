@@ -1,14 +1,16 @@
 import Foundation
-import Combine
+import Observation
 import LTIDICore
 
 /// Observable wrapper around `ActivityList` (from the LTIDICore package)
 /// that persists every change as JSON in Application Support.
 @MainActor
-final class ActivityStore: ObservableObject {
-    @Published private(set) var list: ActivityList
-    @Published private(set) var lastError: String?
+@Observable
+final class ActivityStore {
+    private(set) var list: ActivityList
+    private(set) var lastError: String?
 
+    @ObservationIgnored
     private let fileStore: JSONFileStore<ActivityList>
 
     init(fileURL: URL = ActivityStore.defaultFileURL) {

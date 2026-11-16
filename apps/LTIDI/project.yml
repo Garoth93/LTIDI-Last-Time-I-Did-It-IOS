@@ -2,16 +2,14 @@
 # and is never committed.
 #
 # TODO (da confermare con l'utente):
-#   - deploymentTarget iOS: valore provvisorio, da allineare alla versione
-#     di iOS installata sull'iPhone.
 #   - PRODUCT_BUNDLE_IDENTIFIER: segnaposto com.NOMEUTENTE.ltidi.
 name: LTIDI
 
 options:
   bundleIdPrefix: com.NOMEUTENTE
   deploymentTarget:
-    iOS: "16.0"
-  xcodeVersion: "16.4"
+    iOS: "26.0"   # iPhone dell'utente: iOS 27.2; SDK del runner: iOS 26.5 (Xcode 26.6)
+  xcodeVersion: "26.6"
   createIntermediateGroups: true
   generateEmptyDirectories: true
 
@@ -22,7 +20,7 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     TARGETED_DEVICE_FAMILY: "1"          # iPhone only
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"

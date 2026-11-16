@@ -38,7 +38,10 @@ App presenti:
 
 | App   | Package logica | Bundle ID (segnaposto)  | Deployment target |
 |-------|----------------|-------------------------|-------------------|
-| LTIDI | LTIDICore      | `com.NOMEUTENTE.ltidi`  | iOS 16.0 (provvisorio) |
+| LTIDI | LTIDICore      | `com.NOMEUTENTE.ltidi`  | iOS 26.0 |
+
+L'iPhone dell'utente ha iOS 27.2: il target 26.0 è il massimo che l'SDK del
+runner consente oggi e lascia margine.
 
 Per aggiungere un'app: creare `apps/<Nome>/project.yml` + `Sources/` +
 `Resources/`; i workflow scoprono automaticamente le cartelle in `apps/`
@@ -48,12 +51,16 @@ con `name`, target e scheme nel `project.yml`.
 ## Convenzioni di codice
 
 - Swift 5 language mode (`SWIFT_VERSION: 5.0` nel project.yml), tools-version
-  5.9 nei package, in modo che Linux (`swift:6.0`) e Xcode compilino lo stesso codice.
+  5.9 nei package, in modo che Linux (`swift:6.0`) e Xcode 26 compilino lo
+  stesso codice. Il package dichiara `.iOS(.v17)` come minimo: è solo il suo
+  minimo, l'app può avere un target più alto.
 - Logica, modelli e persistenza nel package: tipi `struct` value-type,
   `Codable`, `Equatable`, `Sendable`, senza `import SwiftUI`/`UIKit`.
   Tutto ciò che è testabile va lì e ha un test.
-- Nell'app: `ObservableObject` + `@Published` (compatibile con il deployment
-  target basso); viste piccole, una per file; stringhe UI in italiano.
+- Nell'app: `@Observable` (framework Observation) + `@MainActor`, iniettato
+  con `.environment(...)` e letto con `@Environment(Tipo.self)`; viste piccole,
+  una per file; stringhe UI in italiano. Target iOS 26.0: si possono usare
+  SwiftData, Liquid Glass e le API SwiftUI di iOS 26 senza `#available`.
 - Persistenza: JSON in Application Support tramite `JSONFileStore` (o
   SwiftData/UserDefaults quando serve, decidere caso per caso e documentarlo).
 - Nessuna dipendenza esterna salvo necessità motivata; se serve, dichiararla
@@ -63,7 +70,7 @@ con `name`, target e scheme nel `project.yml`.
 
 ## Xcode e runner
 
-- Runner: `macos-15`. Xcode fissato con `XCODE_VERSION: "16.4"` (env in ogni
+- Runner: `macos-26`. Xcode fissato con `XCODE_VERSION: "26.6"` (SDK iOS 26.5) (env in ogni
   workflow) e selezionato con `xcode-select`. Se GitHub ritira la versione,
   la composite action fallisce elencando le Xcode disponibili: aggiornare il
   valore in tutti i workflow e qui.

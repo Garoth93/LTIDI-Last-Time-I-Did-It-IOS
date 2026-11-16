@@ -2,7 +2,7 @@ import SwiftUI
 import LTIDICore
 
 struct ContentView: View {
-    @EnvironmentObject private var store: ActivityStore
+    @Environment(ActivityStore.self) private var store
     @State private var isAdding = false
     @State private var newName = ""
 
@@ -110,7 +110,7 @@ struct ActivityRow: View {
 
 #Preview {
     ContentView()
-        .environmentObject(ActivityStore(
+        .environment(ActivityStore(
             fileURL: FileManager.default.temporaryDirectory.appendingPathComponent("preview.json")
         ))
 }

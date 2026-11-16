@@ -27,11 +27,11 @@ on:
         default: LTIDI
 
 env:
-  XCODE_VERSION: "16.4"
+  XCODE_VERSION: "26.6"
 
 jobs:
   testflight:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
