@@ -40,6 +40,15 @@ App presenti:
 |-------|----------------|-------------------------|-------------------|
 | LTIDI | LTIDICore      | `com.garoth93.ltidi`    | iOS 26.0 |
 
+LTIDI è la conversione nativa della PWA LTIDI (React + localStorage). Mappa
+usata: `localStorage` → JSON in Application Support (`AppStore` + `JSONFileStore`),
+stesso formato del backup PWA (`AppData`, import lenient come `normalize()`);
+hash router → `NavigationStack`; modali → sheet; toast con Annulla → banner
+in overlay; griglia SVG/CSS → `HeatmapGrid` (package) + `HeatmapView`; sparkline
+e barre → Swift Charts; download/upload file → `fileExporter`/`fileImporter`;
+service worker → non serve (app offline per natura). La PWA non usa notifiche,
+API esterne né IndexedDB.
+
 L'iPhone dell'utente ha iOS 27.2: il target 26.0 è il massimo che l'SDK del
 runner consente oggi e lascia margine.
 

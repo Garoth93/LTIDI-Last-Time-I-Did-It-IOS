@@ -87,9 +87,28 @@ completo. Per attivarlo: creare una chiave API in App Store Connect e un
 certificato "Apple Distribution", configurare i Secrets elencati in testa al
 file nelle impostazioni della repo, rinominare il file in `testflight.yml`.
 
-## Verifica dell'app di esempio
+## L'app LTIDI (Last Time I Did It)
 
-L'app attuale è una lista minimale "Last Time I Did It" per collaudare la
-pipeline: aggiungi attività con **+**, segna "fatto adesso" con il check,
-elimina con swipe. I dati sono salvati in JSON nella sandbox dell'app e
-sopravvivono alla chiusura e alla rifirma.
+Conversione nativa della PWA [LTIDI-Last-Time-I-Did-It](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It),
+con le stesse funzioni:
+
+- attività con nome, emoji, colore, categoria, note e obiettivo "ogni N giorni" con avvisi *a breve* / *in ritardo*;
+- **Fatto oggi** con un tocco (con *Annulla* nel banner in basso) oppure registrazione in qualunque data passata con nota;
+- storico modificabile, statistiche (medie, mediana, min/max, stima annua, pausa attuale) e grafici;
+- griglia stile contributi GitHub in home, nelle schede e nel dettaglio (tocca un giorno per registrarlo);
+- impostazioni: tema, colore principale, palette griglia, formato del tempo, inizio settimana, ordinamento,
+  raggruppamento per categoria, archiviate, conferma su "Fatto oggi";
+- backup/ripristino JSON ed export CSV.
+
+Al primo avvio l'app carica i dati di esempio, come la PWA.
+
+### Portare i dati dalla PWA all'app
+
+Il backup JSON della PWA e quello dell'app hanno lo stesso formato, in entrambe le direzioni.
+
+1. Apri la PWA in Safari → ⚙︎ Impostazioni → **Backup JSON**. Salva il file in *File* (iCloud Drive o "Sul mio iPhone").
+2. Apri l'app LTIDI → ⚙︎ → **Importa JSON (anche dalla PWA)** → scegli il file → **Sostituisci**.
+3. Controlla che il numero di attività e registrazioni in fondo alle impostazioni coincida con quello della PWA.
+
+I dati dell'app stanno nella sua sandbox: sopravvivono alla rifirma ogni 7 giorni (stesso bundle ID),
+ma **si perdono se elimini l'app**. Fai un *Backup JSON* ogni tanto.
