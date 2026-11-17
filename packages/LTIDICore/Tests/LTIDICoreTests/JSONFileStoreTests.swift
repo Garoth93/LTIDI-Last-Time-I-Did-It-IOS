@@ -14,19 +14,17 @@ final class JSONFileStoreTests: XCTestCase {
     }
 
     func testLoadReturnsNilWhenMissing() throws {
-        let store = JSONFileStore<ActivityList>(url: directory.appendingPathComponent("state.json"))
+        let store = JSONFileStore<AppData>(url: directory.appendingPathComponent("data.json"))
         XCTAssertNil(try store.load())
     }
 
     func testSaveCreatesDirectoryAndLoadRoundTrips() throws {
-        let url = directory.appendingPathComponent("nested/state.json")
-        let store = JSONFileStore<ActivityList>(url: url)
-
-        var list = ActivityList()
-        list.add(name: "Run", lastDone: Date(timeIntervalSince1970: 1_700_000_000))
-        try store.save(list)
+        let url = directory.appendingPathComponent("nested/data.json")
+        let store = JSONFileStore<AppData>(url: url)
+        let data = AppData.demo(today: DayDate(iso: "2026-11-16")!)
+        try store.save(data)
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
-        XCTAssertEqual(try store.load(), list)
+        XCTAssertEqual(try store.load(), data)
     }
 }
