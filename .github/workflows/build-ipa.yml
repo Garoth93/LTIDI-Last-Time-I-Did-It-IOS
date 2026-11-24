@@ -1,8 +1,9 @@
 name: build-ipa
 
-# Builds every app in apps/ for a real iOS device WITHOUT code signing and
-# uploads an unsigned .ipa as a workflow artifact. The .ipa is then signed
-# on the user's side with Sideloadly / SideStore (free Apple account).
+# FALLBACK of testflight.yml. Builds every app in apps/ for a real iOS
+# device WITHOUT code signing and uploads an unsigned .ipa as a workflow
+# artifact, to be signed with Sideloadly / SideStore if TestFlight is not
+# available. iCloud backup does not work in this build (no entitlements).
 
 on:
   push:
