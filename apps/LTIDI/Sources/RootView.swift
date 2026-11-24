@@ -28,8 +28,10 @@ struct LogTarget: Identifiable {
 
 struct RootView: View {
     @Environment(AppStore.self) private var store
+    @Environment(CloudBackupService.self) private var cloud
     @State private var path: [Route] = []
     @State private var formTarget: FormTarget?
+    @State private var showFirstLaunchRestore = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -52,6 +54,12 @@ struct RootView: View {
                     ActivityFormView(activity: activity, isNew: false, onDeleted: { path.removeAll() })
                 }
             }
+        }
+        .sheet(isPresented: $showFirstLaunchRestore) {
+            CloudRestoreView(firstLaunch: true)
+        }
+        .task {
+            if await cloud.shouldOfferRestore() { showFirstLaunchRestore = true }
         }
         .overlay(alignment: .bottom) { ToastView() }
         .animation(.spring(duration: 0.3), value: store.toast?.id)

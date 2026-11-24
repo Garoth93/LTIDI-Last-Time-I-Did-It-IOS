@@ -329,3 +329,14 @@ extension Array {
         }.map(\.element)
     }
 }
+
+extension IDGenerator {
+    /// Parses timestamps written by `timestamp(_:)` or by the PWA (with milliseconds).
+    public static func parseTimestamp(_ string: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        if let date = formatter.date(from: string) { return date }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: string)
+    }
+}

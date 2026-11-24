@@ -5,6 +5,7 @@ struct HomeView: View {
     @Environment(AppStore.self) private var store
     @State private var query = ""
     @State private var logTarget: LogTarget?
+    @State private var showRestore = false
     let onNewActivity: () -> Void
 
     var body: some View {
@@ -30,7 +31,11 @@ struct HomeView: View {
                 }
 
                 if data.activities.isEmpty {
-                    EmptyHomeView(onNew: onNewActivity)
+                    EmptyHomeView(
+                        onNew: onNewActivity,
+                        onRestore: { showRestore = true },
+                        onDemo: { store.resetAll(withDemo: true) }
+                    )
                 } else if items.isEmpty {
                     ContentUnavailableView.search(text: query)
                 }
@@ -79,6 +84,9 @@ struct HomeView: View {
         .sheet(item: $logTarget) { target in
             LogEntrySheet(target: target)
         }
+        .sheet(isPresented: $showRestore) {
+            CloudRestoreView(firstLaunch: false)
+        }
     }
 }
 
@@ -110,6 +118,8 @@ private struct GlobalPanel: View {
 
 private struct EmptyHomeView: View {
     let onNew: () -> Void
+    let onRestore: () -> Void
+    let onDemo: () -> Void
 
     var body: some View {
         ContentUnavailableView {
@@ -119,6 +129,8 @@ private struct EmptyHomeView: View {
         } actions: {
             Button("Aggiungi la prima attività", action: onNew)
                 .buttonStyle(.borderedProminent)
+            Button("Ripristina da iCloud", action: onRestore)
+            Button("Carica dati di esempio", action: onDemo)
         }
         .padding(.top, 40)
     }

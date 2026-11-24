@@ -4,6 +4,8 @@ import LTIDICore
 
 struct SettingsView: View {
     @Environment(AppStore.self) private var store
+    @Environment(CloudBackupService.self) private var cloud
+    @State private var showRestore = false
     @State private var exportDocument: TextFileDocument?
     @State private var exportType: UTType = .json
     @State private var exportName = ""
@@ -53,6 +55,32 @@ struct SettingsView: View {
             }
 
             Section {
+                LabeledContent("Ultimo backup", value: cloud.statusText)
+                Button {
+                    Task {
+                        if await cloud.backup(force: true) { store.showToast("Backup salvato in iCloud ✓") }
+                    }
+                } label: {
+                    Label("Esegui backup ora", systemImage: "icloud.and.arrow.up")
+                }
+                .disabled(cloud.isWorking)
+                Button {
+                    showRestore = true
+                } label: {
+                    Label("Ripristina da iCloud", systemImage: "icloud.and.arrow.down")
+                }
+                if let error = cloud.lastError {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
+            } header: {
+                Text("Backup iCloud")
+            } footer: {
+                Text("Automatico in iCloud Drive › Backup › LTIDI, visibile nell'app File: uno al giorno, gli ultimi 30, più l'ultimo. Contiene solo attività, registrazioni e impostazioni.")
+            }
+
+            Section {
                 Button {
                     startExport(json: true)
                 } label: {
@@ -69,9 +97,9 @@ struct SettingsView: View {
                     Label("Importa JSON (anche dalla PWA)", systemImage: "square.and.arrow.down")
                 }
             } header: {
-                Text("Dati")
+                Text("Esporta e importa")
             } footer: {
-                Text("I dati restano solo su questo iPhone. Esporta un backup ogni tanto: se elimini l'app i dati vanno persi. \(store.data.activities.count) attività · \(store.data.entries.count) registrazioni.")
+                Text("File da salvare dove vuoi. Il JSON si importa anche nella PWA. \(store.data.activities.count) attività · \(store.data.entries.count) registrazioni.")
             }
 
             Section {
@@ -80,6 +108,10 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Impostazioni")
+        .task { await cloud.checkAvailability() }
+        .sheet(isPresented: $showRestore) {
+            CloudRestoreView(firstLaunch: false)
+        }
         .fileExporter(
             isPresented: $isExporting,
             document: exportDocument,
@@ -148,7 +180,7 @@ struct SettingsView: View {
         let stamp = DayDate.today().iso
         do {
             if json {
-                exportDocument = TextFileDocument(data: try store.data.exportJSON())
+                exportDocument = TextFileDocument(data: try BackupFile(data: store.data).encoded())
                 exportType = .json
                 exportName = "ltidi-backup-\(stamp)"
             } else {

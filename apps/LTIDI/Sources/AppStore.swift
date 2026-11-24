@@ -13,6 +13,8 @@ struct ToastMessage: Identifiable {
 @MainActor
 @Observable
 final class AppStore {
+    static let shared = AppStore()
+
     private(set) var data: AppData
     private(set) var toast: ToastMessage?
     /// Incremented on every quick log (drives haptic feedback).
@@ -28,21 +30,16 @@ final class AppStore {
 
     init(fileURL: URL = AppStore.defaultFileURL) {
         fileStore = JSONFileStore(url: fileURL)
-        let today = DayDate.today()
         do {
-            if let saved = try fileStore.load() {
-                data = saved
-            } else {
-                // First launch: sample data, like the PWA.
-                data = .demo(today: today)
-                try? fileStore.save(data)
-            }
+            // First launch: empty, so the iCloud restore can be offered.
+            // Sample data stay available from Settings and the empty home.
+            data = try fileStore.load() ?? AppData()
         } catch {
-            // Never overwrite unreadable data: move it aside and start from the sample.
+            // Never overwrite unreadable data: move it aside and start empty.
             let backup = fileURL.deletingPathExtension()
                 .appendingPathExtension("corrupt-\(Int(Date().timeIntervalSince1970)).json")
             try? FileManager.default.moveItem(at: fileURL, to: backup)
-            data = .demo(today: today)
+            data = AppData()
             errorMessage = "I dati salvati non erano leggibili. Una copia è stata conservata come \(backup.lastPathComponent)."
         }
     }
@@ -70,6 +67,7 @@ final class AppStore {
         } catch {
             errorMessage = "Salvataggio non riuscito: \(error.localizedDescription)"
         }
+        CloudBackupService.shared.scheduleBackup()
     }
 
     func requestQuickLog(_ activity: Activity) {
