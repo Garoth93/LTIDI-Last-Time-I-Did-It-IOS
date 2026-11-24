@@ -68,13 +68,22 @@ jobs:
           dir="$RUNNER_TEMP/private_keys"
           mkdir -p "$dir"
           key="$dir/AuthKey_${ASC_KEY_ID}.p8"
-          if printf '%s' "$ASC_KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then
-            printf '%s\n' "$ASC_KEY_P8" > "$key"
-          else
-            printf '%s' "$ASC_KEY_P8" | base64 --decode > "$key"
+          # Accepts the .p8 text (also pasted on one line or with CRLF) or its
+          # base64, and rewrites it as a strict PEM: xcodebuild (CryptoKit)
+          # rejects anything else with "invalidPEMDocument".
+          raw=$(printf '%s' "$ASC_KEY_P8" | tr -d '\r')
+          if ! printf '%s' "$raw" | grep -q "BEGIN PRIVATE KEY"; then
+            decoded=$(printf '%s' "$raw" | tr -d ' \n\t' | base64 --decode 2>/dev/null | tr -d '\r\000' || true)
+            if printf '%s' "$decoded" | grep -q "BEGIN PRIVATE KEY"; then raw="$decoded"; fi
           fi
+          body=$(printf '%s' "$raw" | sed -e 's/-----BEGIN PRIVATE KEY-----//g' -e 's/-----END PRIVATE KEY-----//g' | tr -d ' \n\t')
+          {
+            echo "-----BEGIN PRIVATE KEY-----"
+            printf '%s\n' "$body" | fold -w 64
+            echo "-----END PRIVATE KEY-----"
+          } > "$key"
           chmod 600 "$key"
-          grep -q "BEGIN PRIVATE KEY" "$key" || { echo "::error::ASC_KEY_P8 non è una chiave .p8 valida"; exit 1; }
+          openssl pkey -in "$key" -noout 2>/dev/null || { echo "::error::ASC_KEY_P8 non è una chiave .p8 valida"; exit 1; }
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
 
       - name: App ID capabilities and stale profiles
@@ -84,7 +93,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           python3 -m pip install --quiet --break-system-packages "pyjwt[crypto]" 2>/dev/null || python3 -m pip install --quiet "pyjwt[crypto]"
-          python3 scripts/asc_bundle_ids.py com.garoth93.ltidi
+          python3 scripts/asc_bundle_ids.py --delete-stale --icloud iCloud.com.garoth93.backup com.garoth93.ltidi
 
       - name: Archive (automatic signing)
         working-directory: apps/${{ env.APP }}
