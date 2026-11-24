@@ -2,8 +2,14 @@
 
 Repo di app iOS **native (Swift + SwiftUI)** personali, sviluppate senza Mac:
 il codice viene scritto su Linux (Claude Code) e compilato **solo** su GitHub
-Actions con runner macOS. Le app non vanno su App Store: l'utente scarica il
-`.ipa` non firmato dagli artifact e lo firma con Sideloadly/SideStore.
+Actions con runner macOS. Le app non vanno su App Store: arrivano sull'iPhone
+con **TestFlight** (account Apple a pagamento, firma automatica in CI,
+`testflight.yml`); il `.ipa` non firmato di `build-ipa.yml` resta come ripiego
+per Sideloadly.
+
+Stessa impostazione delle repo `Garoth93/tessere-IOS` (procedure riusabili
+per TestFlight e backup iCloud descritte nel suo CLAUDE.md) e
+`Garoth93/montagna-360`.
 
 ## Vincoli fissi
 
@@ -13,8 +19,11 @@ Actions con runner macOS. Le app non vanno su App Store: l'utente scarica il
   `apps/<app>/project.yml` con XcodeGen. `.gitignore` lo esclude.
 - La repo è **pubblica**: mai committare segreti, chiavi API, certificati,
   profili di provisioning, dati personali, Team ID reali.
-- Account Apple gratuito: nessuna firma in CI (`CODE_SIGNING_ALLOWED=NO`).
-  Il job TestFlight esiste solo come template disattivato.
+- Firma solo in `testflight.yml` (automatica, chiave API App Store Connect).
+  Mai certificati, `.p12`, profili o `.p8` nella repo; Team ID solo nei secrets.
+  Gli altri workflow compilano con `CODE_SIGNING_ALLOWED=NO`.
+- iCloud solo come **backup in iCloud Drive** (niente CloudKit, niente sync).
+  Nel backup mai token, credenziali o dati del dispositivo.
 - Non modificare impostazioni della repo o secrets: spiegare all'utente cosa
   configurare.
 
@@ -39,6 +48,10 @@ App presenti:
 | App   | Package logica | Bundle ID               | Deployment target |
 |-------|----------------|-------------------------|-------------------|
 | LTIDI | LTIDICore      | `com.garoth93.ltidi`    | iOS 26.0 |
+
+LTIDI non ha widget né App Group. Capability dell'App ID (create a mano su
+developer.apple.com): solo **iCloud** con il container condiviso
+`iCloud.com.garoth93.backup`. Nessun permesso utente nell'Info.plist.
 
 LTIDI è la conversione nativa della PWA LTIDI (React + localStorage). Mappa
 usata: `localStorage` → JSON in Application Support (`AppStore` + `JSONFileStore`),
@@ -72,6 +85,8 @@ con `name`, target e scheme nel `project.yml`.
   SwiftData, Liquid Glass e le API SwiftUI di iOS 26 senza `#available`.
 - Persistenza: JSON in Application Support tramite `JSONFileStore` (o
   SwiftData/UserDefaults quando serve, decidere caso per caso e documentarlo).
+  Primo avvio vuoto (niente dati di esempio automatici) per poter proporre il
+  ripristino da iCloud; i dati di esempio restano un pulsante.
 - Nessuna dipendenza esterna salvo necessità motivata; se serve, dichiararla
   nel `Package.swift` o in `project.yml > packages`, mai vendorizzare binari.
 - Commit piccoli e descrittivi, in italiano o inglese ma coerenti; un commit
@@ -90,15 +105,63 @@ con `name`, target e scheme nel `project.yml`.
 
 | Workflow | Trigger | Cosa fa |
 |----------|---------|---------|
+| `testflight.yml` | manuale, push su `main` (solo `apps/`, `packages/`, il workflow), ogni ~60 giorni (1° dei mesi dispari, sul branch di default) | archive firmato + export App Store + upload su TestFlight |
 | `build-simulator.yml` | push su ogni branch, PR, manuale | `xcodebuild build` per iOS Simulator, senza firma. Serve a vedere gli errori di compilazione. |
-| `build-ipa.yml` | push su `main`, manuale | build Release per dispositivo con `CODE_SIGNING_ALLOWED=NO`, impacchetta `Payload/<App>.app` in `<App>-unsigned.ipa` e lo carica come artifact (30 giorni). |
 | `test-linux.yml` | push su ogni branch, PR, manuale | `swift test` su ogni package in `packages/`. |
-| `testflight.yml.disabled` | — | Template firmato con chiave API App Store Connect. Disattivato: GitHub ignora l'estensione `.disabled`. |
+| `build-ipa.yml` | push su `main`, manuale | ripiego Sideloadly: build Release con `CODE_SIGNING_ALLOWED=NO`, `<App>-unsigned.ipa` come artifact (30 giorni). Senza entitlements: niente backup iCloud. |
 
-Nota: nei repo pubblici i workflow con `schedule` vengono disattivati dopo 60
-giorni senza commit. Se in futuro si aggiunge un rebuild periodico (utile per
-la scadenza a 7 giorni della firma gratuita), prevedere un riattivatore o usare
-`workflow_dispatch`.
+Nelle repo pubbliche i workflow con `schedule` vengono disattivati dopo 60
+giorni senza commit (GitHub avvisa per email): l'utente lo riattiva da Actions.
+Le build TestFlight durano 90 giorni, quindi c'è margine.
+
+### TestFlight
+
+Procedura identica a `Garoth93/tessere-IOS`:
+
+- secrets della repo: `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (testo del
+  `.p8`, anche su una riga o in base64: il workflow lo riscrive come PEM
+  rigoroso, altrimenti xcodebuild dà `invalidPEMDocument`), `APPLE_TEAM_ID`.
+  Chiave API App Store Connect con ruolo Admin, la stessa delle altre app;
+- App ID `com.garoth93.ltidi` e scheda App Store Connect creati a mano; i
+  profili li crea `xcodebuild -allowProvisioningUpdates`. Il container iCloud
+  va spuntato a mano sull'App ID (l'API non può);
+- `project.yml` con firma vuota (la imposta il workflow da riga di comando:
+  `CODE_SIGN_STYLE=Automatic`, `CODE_SIGN_IDENTITY="Apple Development"`,
+  `DEVELOPMENT_TEAM`), `SystemCapabilities` iCloud e Background Modes sul
+  target, `UIRequiresFullScreen: true` (solo verticale, errore 90474),
+  `ITSAppUsesNonExemptEncryption: false`, icona 1024 senza trasparenza;
+- build number = `github.run_number`; `MARKETING_VERSION` si alza a mano;
+- step "App ID capabilities" (`scripts/asc_bundle_ids.py --delete-stale
+  --icloud iCloud.com.garoth93.backup`) stampa capability e profili ed elimina
+  quelli senza il container (Xcode li ricrea); il certificato di sviluppo
+  creato sul runner viene revocato (`scripts/asc_revoke_certs.py`). Log di
+  archive/export nell'artifact `testflight-logs`.
+
+### Backup iCloud Drive
+
+Container **condiviso** `iCloud.com.garoth93.backup`, sottocartella `LTIDI`
+(in File: *iCloud Drive › Backup › LTIDI*).
+
+- `LTIDI.entitlements`: `icloud-container-identifiers` e
+  `ubiquity-container-identifiers` = il container, `icloud-services` =
+  `CloudDocuments`. Info.plist: `NSUbiquitousContainers` con
+  `NSUbiquitousContainerName: Backup` (uguale in tutte le app),
+  `UIBackgroundModes: [fetch]`, `BGTaskSchedulerPermittedIdentifiers:
+  [com.garoth93.ltidi.refresh]`.
+- File: `LTIDI-backup-yyyy-MM-dd.json` (uno al giorno, ultimi 30) +
+  `LTIDI-backup-latest.json`. Formato `BackupFile` = backup della PWA
+  (`AppData` con `version`) + `app` + `exportedAt`: si importa anche da
+  Impostazioni › Importa JSON e nella PWA. Lo usa anche l'export manuale.
+- Logica pura in `CloudBackup.swift` (package: nomi, pulizia, impronta del
+  contenuto per non riscrivere se nulla è cambiato); I/O in
+  `CloudBackupService.swift` (`NSFileCoordinator`, container risolto fuori dal
+  main thread, segnaposto `.<nome>.icloud`).
+- Quando: 8 s dopo le modifiche, all'uscita in background, nel
+  `BGAppRefreshTask` (`.backgroundTask(.appRefresh)`, ~6 h). Un'app vuota non
+  sovrascrive mai i backup.
+- Ripristino: Impostazioni › Ripristina da iCloud e home vuota (sostituisce i
+  dati, con conferma se l'app non è vuota); guidato al primo avvio se l'app è
+  vuota e c'è un backup (chiesto una volta).
 
 ### Come leggere i log di CI
 

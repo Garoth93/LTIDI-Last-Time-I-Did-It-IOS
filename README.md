@@ -1,91 +1,59 @@
-# LTIDI iOS — app native personali compilate su GitHub Actions
+# LTIDI iOS: app nativa compilata su GitHub Actions
 
-App iOS native (Swift + SwiftUI) sviluppate senza Mac: il codice è scritto con
-Claude Code su Linux, compilato da GitHub Actions su runner macOS e installato
-sull'iPhone con un account Apple gratuito tramite Sideloadly o SideStore.
+App iOS nativa (Swift + SwiftUI) sviluppata senza Mac: il codice è scritto con
+Claude Code su Linux, compilato da GitHub Actions su runner macOS e distribuito
+sull'iPhone con **TestFlight**. Il `.ipa` non firmato per Sideloadly resta come
+ripiego.
 
 Stato CI:
+[![testflight](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/testflight.yml/badge.svg)](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/testflight.yml)
 [![build-simulator](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/build-simulator.yml/badge.svg)](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/build-simulator.yml)
 [![test-linux](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/test-linux.yml/badge.svg)](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/test-linux.yml)
-[![build-ipa](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/build-ipa.yml/badge.svg)](https://github.com/Garoth93/LTIDI-Last-Time-I-Did-It-IOS/actions/workflows/build-ipa.yml)
 
 ## Struttura
 
 ```
-apps/LTIDI/          app SwiftUI (project.yml per XcodeGen, Sources/, Resources/)
+apps/LTIDI/          app SwiftUI (project.yml per XcodeGen, Sources/, Resources/, LTIDI.entitlements)
 packages/LTIDICore/  logica non grafica, testata con `swift test` anche su Linux
-.github/workflows/   build-simulator, build-ipa, test-linux, testflight (disattivato)
+scripts/             diagnostica App Store Connect usata da testflight.yml
+.github/workflows/   testflight, build-simulator, test-linux, build-ipa (ripiego)
 CLAUDE.md            convenzioni e regole di lavoro per Claude Code
 ```
 
-Dettagli tecnici (versione Xcode, toolchain, convenzioni) in [CLAUDE.md](CLAUDE.md).
+Dettagli tecnici (Xcode, firma, backup) in [CLAUDE.md](CLAUDE.md).
 
 ## Cosa fa la CI
 
 | Workflow | Quando | Risultato |
 |----------|--------|-----------|
-| build-simulator | ogni push / PR | verifica che l'app compili (Simulator) |
-| test-linux | ogni push / PR | esegue i test dei package di logica |
-| build-ipa | push su `main` o avvio manuale | artifact `LTIDI-unsigned-ipa` con `LTIDI-unsigned.ipa` (target iOS 26.0, Xcode 26.6) |
-| testflight | disattivato | template per un futuro account a pagamento |
+| testflight | push su `main` che tocca l'app, avvio manuale, ogni ~60 giorni | build firmata caricata su TestFlight |
+| build-simulator | ogni push / PR | verifica che l'app compili |
+| test-linux | ogni push / PR | esegue i test del package di logica |
+| build-ipa | push su `main`, avvio manuale | ripiego: `.ipa` non firmato come artifact, senza backup iCloud |
 
-## Installare l'app sull'iPhone (passaggi manuali)
+## Installare l'app
 
-### 0. Prerequisiti una tantum
+1. Sull'iPhone installa **TestFlight** dall'App Store, una volta sola.
+2. Accetta l'invito di App Store Connect: arriva per email ai tester interni, gli esterni usano il link pubblico.
+3. Ogni push su `main` che cambia l'app carica una nuova build. Compare in TestFlight dopo 5-30 minuti di elaborazione e si aggiorna da lì.
 
-- **iPhone**: Impostazioni → Privacy e sicurezza → **Modalità sviluppatore** → attiva
-  (richiede riavvio). Su iOS 16+ la voce compare dopo aver collegato il telefono
-  a un computer con Sideloadly/iTunes una prima volta, oppure è già visibile.
-- **Computer** (Windows o Mac, anche il MacBook Air con Sonoma va bene solo per
-  questo passaggio): installare [Sideloadly](https://sideloadly.io) e, su
-  Windows, iTunes (versione dal sito Apple, non dal Microsoft Store) per i
-  driver USB.
-- In alternativa **SideStore** (firma dal telefono stesso dopo la prima
-  installazione via computer; ha bisogno di una VPN locale "StosVPN" per
-  aggiornarsi): https://sidestore.io
+Le build TestFlight scadono dopo 90 giorni. Il workflow le ricarica da solo il 1° dei mesi dispari.
+Nelle repo pubbliche GitHub disattiva i workflow programmati dopo 60 giorni senza commit e avvisa per email:
+in quel caso riattiva **testflight** da *Actions* con un clic, oppure lancialo a mano con **Run workflow**.
 
-### 1. Scaricare il `.ipa`
+### Ripiego senza TestFlight
 
-1. Aprire la pagina **Actions** della repo → workflow **build-ipa**.
-2. Scegliere l'ultimo run verde (o lanciarlo con **Run workflow** sul branch
-   desiderato).
-3. In fondo alla pagina del run, sezione **Artifacts**, scaricare
-   `LTIDI-unsigned-ipa` (è uno zip che contiene `LTIDI-unsigned.ipa`) ed
-   estrarlo. Gli artifact restano disponibili 30 giorni.
+Il workflow **build-ipa** produce l'artifact `LTIDI-unsigned-ipa` da firmare con
+[Sideloadly](https://sideloadly.io). Questa build non ha il backup iCloud e con un account
+gratuito va rifirmata ogni 7 giorni: usala solo se TestFlight non è disponibile.
 
-### 2. Firmare e installare con Sideloadly
+### Passare dall'app Sideloadly a quella TestFlight
 
-1. Collegare l'iPhone via USB, sbloccarlo e scegliere "Autorizza" se richiesto.
-2. Aprire Sideloadly, trascinare `LTIDI-unsigned.ipa` nella finestra.
-3. Inserire il proprio Apple ID (account gratuito); alla prima volta chiederà
-   la password e il codice 2FA. Non vengono salvati nella repo, restano sul
-   computer.
-4. Premere **Start**. Sideloadly crea un certificato di sviluppo personale,
-   firma l'app e la installa.
+L'app installata con Sideloadly ha un'altra firma e TestFlight potrebbe non sostituirla.
 
-### 3. Fidarsi del profilo sviluppatore
-
-Sull'iPhone: Impostazioni → Generali → **VPN e gestione dispositivo** →
-sezione "App sviluppatore" → toccare il proprio Apple ID → **Autorizza**.
-Da quel momento l'icona LTIDI si apre normalmente.
-
-### 4. Limiti dell'account Apple gratuito
-
-- La firma scade dopo **7 giorni**: l'app smette di aprirsi e va rifirmata
-  (ripetere il passo 2 con lo stesso `.ipa`; i dati salvati dall'app restano,
-  perché il bundle ID non cambia). SideStore può rifirmare in autonomia dal telefono.
-- Massimo **3 app** firmate contemporaneamente per Apple ID e massimo 10
-  bundle ID diversi ogni 7 giorni.
-- Niente push notification remote, iCloud, App Groups, Sign in with Apple.
-  Le notifiche **locali** funzionano.
-- L'app va installata sul telefono registrato con quell'Apple ID.
-
-### 5. Passaggio futuro all'account a pagamento (TestFlight)
-
-Il file `.github/workflows/testflight.yml.disabled` contiene già il job
-completo. Per attivarlo: creare una chiave API in App Store Connect e un
-certificato "Apple Distribution", configurare i Secrets elencati in testa al
-file nelle impostazioni della repo, rinominare il file in `testflight.yml`.
+1. Nell'app vecchia: ⚙︎ › **Backup JSON**, salva il file in *File*.
+2. Elimina l'app vecchia e installa LTIDI da TestFlight.
+3. ⚙︎ › **Importa JSON** e scegli il file. Da lì in poi il backup iCloud è automatico.
 
 ## L'app LTIDI (Last Time I Did It)
 
@@ -98,17 +66,27 @@ con le stesse funzioni:
 - griglia stile contributi GitHub in home, nelle schede e nel dettaglio (tocca un giorno per registrarlo);
 - impostazioni: tema, colore principale, palette griglia, formato del tempo, inizio settimana, ordinamento,
   raggruppamento per categoria, archiviate, conferma su "Fatto oggi";
-- backup/ripristino JSON ed export CSV.
+- backup automatico in iCloud Drive, backup/ripristino JSON ed export CSV.
 
-Al primo avvio l'app carica i dati di esempio, come la PWA.
+Al primo avvio l'app è vuota. Se in iCloud Drive c'è un backup propone di ripristinarlo;
+altrimenti puoi aggiungere la prima attività o caricare i dati di esempio.
+
+## Backup
+
+LTIDI salva da sola un backup in **iCloud Drive › Backup › LTIDI**, visibile nell'app *File*:
+
+- un file al giorno, `LTIDI-backup-aaaa-mm-gg.json`, gli ultimi 30, più `LTIDI-backup-latest.json`;
+- scritto pochi secondi dopo ogni modifica, quando l'app va in background e ogni ~6 ore in background;
+- contiene solo attività, registrazioni e impostazioni, nel formato del backup della PWA con la data di salvataggio;
+- un'app vuota non sovrascrive mai i backup esistenti.
+
+Ripristino: ⚙︎ › **Ripristina da iCloud**, oppure dalla home vuota. Il ripristino sostituisce tutti i dati attuali.
+Serve l'accesso a iCloud con iCloud Drive attivo per LTIDI.
 
 ### Portare i dati dalla PWA all'app
 
 Il backup JSON della PWA e quello dell'app hanno lo stesso formato, in entrambe le direzioni.
 
-1. Apri la PWA in Safari → ⚙︎ Impostazioni → **Backup JSON**. Salva il file in *File* (iCloud Drive o "Sul mio iPhone").
-2. Apri l'app LTIDI → ⚙︎ → **Importa JSON (anche dalla PWA)** → scegli il file → **Sostituisci**.
+1. Apri la PWA in Safari › ⚙︎ Impostazioni › **Backup JSON**. Salva il file in *File*.
+2. Apri LTIDI › ⚙︎ › **Importa JSON (anche dalla PWA)** › scegli il file › **Sostituisci**.
 3. Controlla che il numero di attività e registrazioni in fondo alle impostazioni coincida con quello della PWA.
-
-I dati dell'app stanno nella sua sandbox: sopravvivono alla rifirma ogni 7 giorni (stesso bundle ID),
-ma **si perdono se elimini l'app**. Fai un *Backup JSON* ogni tanto.
